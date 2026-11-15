@@ -4,3 +4,5 @@ package-lock.json
 vite.config.json
 eslint.config.js
 concept.txt
+.agents
+dist

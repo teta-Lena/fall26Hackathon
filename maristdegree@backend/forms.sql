@@ -36,6 +36,19 @@ create table if not exists public.form_submissions (
   created_at        timestamptz not null default now()
 );
 
+-- A form can only be marked as sent once the advisor has signed it.
+alter table public.form_submissions
+  drop constraint if exists sent_requires_advisor_signature;
+alter table public.form_submissions
+  add constraint sent_requires_advisor_signature check (
+    status <> 'sent_to_registrar'
+    or (
+      advisor_signed_at is not null
+      and advisor_id is not null
+      and coalesce(data ->> 'advisor_signature', '') <> ''
+    )
+  );
+
 alter table public.form_submissions enable row level security;
 
 -- Students see their own forms; advisors see all of them.

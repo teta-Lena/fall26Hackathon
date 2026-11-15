@@ -52,12 +52,14 @@ async function createPathwayForm(student, pathway) {
     : { data: null, error: null };
   if (majorError) throw majorError;
 
+  // Skip a form the advisor is signing right now (it's already on its way).
   const { error: withdrawError } = await admin
     .from("form_submissions")
     .update({ status: "withdrawn" })
     .eq("student_id", student.id)
     .eq("form_type", "pathway_declaration")
-    .eq("status", "pending_advisor");
+    .eq("status", "pending_advisor")
+    .is("advisor_signed_at", null);
   if (withdrawError) throw withdrawError;
 
   const today = formDate();
@@ -184,6 +186,30 @@ export function registerFormRoutes(app) {
       advisor_signed_date: formDate(signedAt),
     };
 
+    // Record the advisor's signature and claim the form in one conditional
+    // update, before any email goes out. If two requests race (double click,
+    // two tabs), only one gets the row back, so the registrar gets one email.
+    // A claim older than 5 minutes is treated as abandoned (e.g. a crash).
+    const staleClaim = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: claimed, error: claimError } = await admin
+      .from("form_submissions")
+      .update({ data, advisor_signed_at: signedAt.toISOString() })
+      .eq("id", form.id)
+      .eq("status", "pending_advisor")
+      .or(`advisor_signed_at.is.null,advisor_signed_at.lt.${staleClaim}`)
+      .select("id");
+    if (claimError) return res.status(500).json({ error: claimError.message });
+    if (!claimed.length) {
+      return res.status(409).json({ error: "This form is already being signed and sent" });
+    }
+
+    // Undo the claim so the advisor can try again.
+    const releaseClaim = (message) =>
+      admin
+        .from("form_submissions")
+        .update({ data: form.data, advisor_signed_at: null, email_error: message })
+        .eq("id", form.id);
+
     let mail;
     try {
       const pdf = await fillPathwayDeclaration(data);
@@ -215,17 +241,15 @@ export function registerFormRoutes(app) {
         attachments: [{ filename: pdfFilename(form), content: Buffer.from(pdf) }],
       });
     } catch (err) {
-      await admin.from("form_submissions").update({ email_error: err.message }).eq("id", form.id);
+      await releaseClaim(err.message);
       return res.status(502).json({ error: `Couldn't email the registrar: ${err.message}` });
     }
 
     const { data: updated, error: updateError } = await admin
       .from("form_submissions")
       .update({
-        data,
         status: "sent_to_registrar",
         advisor_id: req.user.id,
-        advisor_signed_at: signedAt.toISOString(),
         sent_at: new Date().toISOString(),
         email_error: null,
       })

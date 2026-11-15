@@ -1,0 +1,526 @@
+[
+  {
+    "slug": "computer-science",
+    "name": "Computer Science",
+    "requirements": {
+      "total_major_credits": "68-72",
+      "graduation_credits": null,
+      "sections": [
+        {
+          "title": "Major courses",
+          "items": [
+            {
+              "code": "CMPT 120L",
+              "title": "Introduction to Programming",
+              "credits": 4
+            },
+            {
+              "code": "CMPT 220L",
+              "title": "Software Development I",
+              "credits": 4
+            },
+            {
+              "code": "CMPT 221L",
+              "title": "Software Development II",
+              "credits": 4
+            },
+            {
+              "code": "CMPT 230L",
+              "title": "Software Systems and Analysis",
+              "credits": 4
+            },
+            {
+              "code": "CMPT 306L",
+              "title": "Data Communications and Networks",
+              "credits": 4
+            },
+            { "code": "CMPT 307N", "title": "Internetworking", "credits": 4 },
+            {
+              "code": "CMPT 308N",
+              "title": "Database Management",
+              "credits": 4
+            },
+            { "code": "CMPT 330L", "title": "System Design", "credits": 4 },
+            {
+              "code": "CMPT 422N",
+              "title": "Computer Organization and Architecture",
+              "credits": 4
+            },
+            {
+              "code": "CMPT 435L",
+              "title": "Algorithm Analysis and Design",
+              "credits": 3
+            },
+            { "code": "CMPT 475N", "title": "CS Project I", "credits": 3 },
+            { "code": "CMPT 476N", "title": "CS Project II", "credits": 1 }
+          ]
+        },
+        {
+          "title": "Related fields",
+          "items": [
+            {
+              "code": "BUS 100L",
+              "title": "Introduction to Business and Management",
+              "credits": 3
+            },
+            {
+              "code": "MATH 130L",
+              "title": "Introductory Statistics I",
+              "credits": 3
+            },
+            {
+              "code": "MATH 205L",
+              "title": "Discrete Mathematics",
+              "credits": 4
+            },
+            { "code": "MATH 241L", "title": "Calculus I", "credits": 4 }
+          ]
+        },
+        {
+          "title": "Concentration option: Game Design and Programming",
+          "credits": "14-15",
+          "note": "Pick one concentration (11-15 credits).",
+          "items": [
+            {
+              "code": "CMPT 414N",
+              "title": "Game Design and Programming I",
+              "credits": 4
+            },
+            {
+              "code": "CMPT 415N",
+              "title": "Game Design and Programming II",
+              "credits": 4
+            },
+            { "code": "PHYS 211L", "title": "General Physics I", "credits": 3 },
+            {
+              "choose": "Choose one",
+              "options": [
+                {
+                  "code": "CMPT 404L",
+                  "title": "Artificial Intelligence",
+                  "credits": 3
+                },
+                {
+                  "code": "CMPT 446N",
+                  "title": "Computer Graphics",
+                  "credits": 4
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Concentration option: Software Development",
+          "credits": "11",
+          "note": "Pick one concentration (11-15 credits).",
+          "items": [
+            {
+              "choose": "System elective (4 credits), choose one",
+              "options": [
+                {
+                  "code": "CMPT 424N",
+                  "title": "Operating Systems",
+                  "credits": 4
+                },
+                {
+                  "code": "CMPT 432N",
+                  "title": "Design of Compilers",
+                  "credits": 4
+                }
+              ]
+            },
+            {
+              "choose": "Language elective (3 credits), choose one",
+              "options": [
+                {
+                  "code": "CMPT 331L",
+                  "title": "Theory of Programming Languages",
+                  "credits": 3
+                },
+                {
+                  "code": "CMPT 440L",
+                  "title": "Formal Languages and Computability",
+                  "credits": 3
+                }
+              ]
+            },
+            {
+              "choose": "Third required elective (4 credits), an approved upper-level CMPT course such as",
+              "options": [
+                {
+                  "code": "CMPT 333N",
+                  "title": "Language Study",
+                  "credits": 4
+                },
+                {
+                  "code": "CMPT 335N",
+                  "title": "E-Commerce Development and Design",
+                  "credits": 3
+                },
+                {
+                  "code": "CMPT 404L",
+                  "title": "Artificial Intelligence",
+                  "credits": 3
+                },
+                { "code": "CMPT 412N", "title": "Robotics", "credits": 3 },
+                {
+                  "code": "CMPT 414N",
+                  "title": "Game Design and Programming I",
+                  "credits": 4
+                },
+                {
+                  "code": "CMPT 415N",
+                  "title": "Game Design and Programming II",
+                  "credits": 4
+                },
+                {
+                  "code": "CMPT 425N",
+                  "title": "Distributed Systems",
+                  "credits": 3
+                },
+                {
+                  "code": "CMPT 446N",
+                  "title": "Computer Graphics",
+                  "credits": 4
+                },
+                {
+                  "code": "CMPT 448N",
+                  "title": "Introduction to Quantum Computer Algorithms and Programming",
+                  "credits": 4
+                },
+                {
+                  "code": "CMPT 467N",
+                  "title": "Advanced Topics in CS",
+                  "credits": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Core: Foundation",
+          "credits": "7",
+          "items": [
+            { "code": "FYS 101L", "title": "First Year Seminar", "credits": 4 },
+            { "code": "ENG 120L", "title": "Writing for College", "credits": 3 }
+          ]
+        },
+        {
+          "title": "Core: Distribution",
+          "credits": "18-21",
+          "items": [
+            {
+              "code": "PHIL 101L",
+              "title": "Philosophical Perspectives",
+              "credits": 3
+            },
+            {
+              "text": "Ethics, Applied Ethics, Religious Studies (CMPT 305L Technology, Ethics and Society recommended)",
+              "credits": "3"
+            },
+            { "text": "Fine Arts", "credits": "3" },
+            { "text": "History", "credits": "3" },
+            { "text": "Literature", "credits": "3" },
+            { "text": "Mathematics (fulfilled by major)", "credits": "0" },
+            {
+              "text": "Natural Science (fulfilled by major)",
+              "credits": "0-3"
+            },
+            { "text": "Social Science", "credits": "3" }
+          ]
+        },
+        {
+          "title": "Core: Pathway",
+          "credits": "12",
+          "pathway": true,
+          "items": [
+            {
+              "text": "Courses addressing an interdisciplinary topic. Breadth and Pathway courses may overlap."
+            }
+          ]
+        },
+        {
+          "title": "Electives and/or internship",
+          "credits": "8-15",
+          "items": []
+        }
+      ]
+    }
+  },
+  {
+    "slug": "finance",
+    "name": "Finance",
+    "requirements": {
+      "total_major_credits": "69-70",
+      "graduation_credits": 120,
+      "sections": [
+        {
+          "title": "Technical and analytical foundation",
+          "credits": "21-22",
+          "items": [
+            {
+              "code": "ACCT 203N",
+              "title": "Financial Accounting",
+              "credits": 3
+            },
+            {
+              "code": "ACCT 204N",
+              "title": "Managerial Accounting",
+              "credits": 3
+            },
+            {
+              "code": "BUS 310L",
+              "title": "Data Modeling for Business",
+              "credits": 3
+            },
+            {
+              "code": "ECON 103L",
+              "title": "Principles of Microeconomics",
+              "credits": 3
+            },
+            {
+              "code": "ECON 104L",
+              "title": "Principles of Macroeconomics",
+              "credits": 3
+            },
+            {
+              "choose": "Choose one",
+              "options": [
+                {
+                  "code": "MATH 115L",
+                  "title": "Calculus with Management Applications",
+                  "credits": 3
+                },
+                { "code": "MATH 241L", "title": "Calculus I", "credits": 4 }
+              ]
+            },
+            {
+              "code": "MATH 130L",
+              "title": "Introductory Statistics I",
+              "credits": 3
+            }
+          ]
+        },
+        {
+          "title": "Interface between finance and business",
+          "credits": "18",
+          "items": [
+            {
+              "code": "BUS 100L",
+              "title": "Introduction to Business and Management",
+              "credits": 3
+            },
+            { "code": "BUS 202L", "title": "Business & Society", "credits": 3 },
+            {
+              "code": "BUS 302N",
+              "title": "Organizational Behavior",
+              "credits": 3
+            },
+            {
+              "code": "BUS 340N",
+              "title": "Marketing Principles",
+              "credits": 3
+            },
+            {
+              "code": "BUS 382N",
+              "title": "Legal Foundation of Business",
+              "credits": 3
+            },
+            {
+              "choose": "Choose one",
+              "options": [
+                {
+                  "code": "BUS 388N",
+                  "title": "Operations Management",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 337N",
+                  "title": "Supply Chain Management",
+                  "credits": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Finance core",
+          "credits": "15",
+          "items": [
+            {
+              "code": "ACCT 330N",
+              "title": "Financial Statement Analysis",
+              "credits": 3
+            },
+            {
+              "code": "BUS 320N",
+              "title": "Financial Management",
+              "credits": 3
+            },
+            {
+              "code": "BUS 420N",
+              "title": "Investment Analysis",
+              "credits": 3
+            },
+            { "code": "BUS 421N", "title": "Corporate Finance", "credits": 3 },
+            {
+              "code": "ECON 422L",
+              "title": "Financial Markets and Institutions",
+              "credits": 3
+            }
+          ]
+        },
+        {
+          "title": "Finance electives",
+          "credits": "12",
+          "items": [
+            {
+              "choose": "Choose four",
+              "options": [
+                {
+                  "code": "BUS 312L",
+                  "title": "Ethics and Finance Regulations",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 315N",
+                  "title": "Personal Finance",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 416N",
+                  "title": "CFA Level 1 Prep Class",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 417N",
+                  "title": "Structured Finance Modeling",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 418N",
+                  "title": "Derivatives and Risk Management",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 423N",
+                  "title": "Finance for Entrepreneurs",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 426N",
+                  "title": "Investment Practicum: Equities",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 427N",
+                  "title": "Investment Practicum: Fixed Income",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 431N",
+                  "title": "Financial Distress",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 432N",
+                  "title": "Financial Modeling",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 434N",
+                  "title": "Mergers & Acquisitions",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 435N",
+                  "title": "Real Estate Finance and Investments",
+                  "credits": 3
+                },
+                {
+                  "code": "BUS 438N",
+                  "title": "Technical Analysis and Behavioral Finance",
+                  "credits": 3
+                },
+                {
+                  "code": "ECON 313L",
+                  "title": "Behavioral Economics",
+                  "credits": 3
+                },
+                {
+                  "code": "ECON 315L",
+                  "title": "Money and Banking",
+                  "credits": 3
+                },
+                {
+                  "code": "ECON 325L",
+                  "title": "Econometrics and Data Analysis",
+                  "credits": 4
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Integrative capping course",
+          "credits": "3",
+          "items": [
+            {
+              "code": "BUS 477N",
+              "title": "Management Strategy and Policy",
+              "credits": 3
+            }
+          ]
+        },
+        {
+          "title": "Core: Foundation",
+          "credits": "7",
+          "items": [
+            { "code": "FYS 101L", "title": "First Year Seminar", "credits": 4 },
+            { "code": "ENG 120L", "title": "Writing for College", "credits": 3 }
+          ]
+        },
+        {
+          "title": "Core: Breadth",
+          "credits": "18",
+          "items": [
+            {
+              "code": "PHIL 101L",
+              "title": "Philosophical Perspectives",
+              "credits": 3
+            },
+            {
+              "text": "Ethics, Applied Ethics, or Religious Studies",
+              "credits": "3"
+            },
+            { "text": "Fine Arts", "credits": "3" },
+            { "text": "History", "credits": "3" },
+            { "text": "Literature", "credits": "3" },
+            { "text": "Mathematics (fulfilled by major)", "credits": "0" },
+            { "text": "Natural Science", "credits": "3" },
+            { "text": "Social Science (fulfilled by major)", "credits": "0" }
+          ]
+        },
+        {
+          "title": "Core: Pathway",
+          "credits": "12",
+          "pathway": true,
+          "items": [
+            {
+              "text": "Courses addressing an interdisciplinary topic. Breadth and Pathway courses may overlap."
+            }
+          ]
+        },
+        {
+          "title": "Electives",
+          "credits": "13-14",
+          "items": [
+            {
+              "text": "3-9 credits are encouraged for internships. Options: Minor in Economics, Minor in Accounting, double major in Business Administration, or more Finance electives."
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

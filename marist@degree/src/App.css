@@ -1,9 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
 @import "tailwindcss";
 
-* {
-  margin: 0;
-  /* padding: 0; */
-  box-sizing: border-box;
-  font-family: "Inter", sans-serif;
+/* Keep global resets inside the base layer. Unlayered rules here would
+   override Tailwind utilities (e.g. `* { margin: 0 }` breaks `mx-auto`).
+   Tailwind's preflight already resets margins and box-sizing. */
+@layer base {
+  * {
+    font-family: "Inter", sans-serif;
+  }
 }

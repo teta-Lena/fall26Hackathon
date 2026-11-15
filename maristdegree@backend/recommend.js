@@ -1,8 +1,17 @@
 // Turns a student's plan + major into dashboard suggestions.
 // Pure functions: no database access, easy to test and tweak.
 
-// Credits per semester for each pace on the profile setup page.
+// Credits per semester for each pace on the profile setup page (used for the
+// graduation estimate), and the range a suggested semester should land in.
 export const PACE_CREDITS = { easy: 12, medium: 15, hard: 18 };
+export const PACE_RANGE = {
+  easy: { min: 12, max: 14 },
+  medium: { min: 14, max: 16 },
+  hard: { min: 17, max: 18 },
+};
+
+// At most this many suggested courses from one subject (CMPT, MATH, ...).
+const MAX_PER_SUBJECT = 2;
 
 // Extra keywords implied by each post-graduation goal.
 const GOAL_KEYWORDS = {
@@ -65,8 +74,16 @@ function chooseCount(label = "") {
 
 // 120 in "CMPT 120L"; used to suggest lower-level courses first.
 function courseLevel(code) {
-  const n = code.match(/\d+/);
+  const n = /\d+/.exec(code);
   return n ? Number(n[0]) : 999;
+}
+
+const subjectOf = (code) => code.split(" ")[0];
+
+// Credits of a core area: "3" -> 3, "0-3" -> 0 (may already be covered), "" -> 0.
+function areaCredits(credits) {
+  const m = /^(\d+)/.exec(String(credits ?? ""));
+  return m ? Number(m[1]) : 0;
 }
 
 const isConcentration = (title) => /^concentration/i.test(title);
@@ -91,32 +108,76 @@ function pickConcentration(requirements, done, keywords = []) {
   return options.reduce((best, s) => (score(s) > score(best) ? s : best)).title;
 }
 
-// Breaks a major's requirements into trackable units: a single course, or a
-// "choose N of these" group. Only the chosen concentration is included.
+// Core areas without a course code ("Fine Arts", 3 credits) and Pathway
+// course slots become checkable units. Their id goes in completed_courses.
+function areaUnitsFor(section) {
+  if (section.pathway) {
+    const count = Math.round(areaCredits(section.credits) / 3) || 4;
+    return Array.from({ length: count }, (_, i) => ({
+      kind: "area",
+      id: `area:Pathway course ${i + 1}`,
+      title: `Pathway course ${i + 1}`,
+      credits: 3,
+      pathway: true,
+    }));
+  }
+  return section.items
+    .filter((item) => item.text && areaCredits(item.credits) > 0)
+    .map((item) => {
+      const label = item.text.split(" (")[0];
+      return {
+        kind: "area",
+        id: `area:${label}`,
+        title: `${label} course`,
+        credits: areaCredits(item.credits),
+      };
+    });
+}
+
+// Breaks a major's requirements into trackable units: a single course, a
+// "choose N of these" group, or a core area / pathway slot.
+// Only the chosen concentration is included.
 function requirementUnits(requirements, concentration) {
   const units = [];
   requirements.sections.forEach((section, sectionIndex) => {
     if (isConcentration(section.title) && section.title !== concentration) return;
+    const base = { section: section.title, sectionIndex };
     for (const item of section.items) {
       if (item.code) {
-        units.push({ kind: "course", section: section.title, sectionIndex, ...item });
+        units.push({ kind: "course", ...base, ...item });
       } else if (item.options) {
         units.push({
           kind: "choice",
-          section: section.title,
-          sectionIndex,
+          ...base,
           label: item.choose,
           count: chooseCount(item.choose),
           options: item.options,
         });
       }
-      // Plain-text items (gen-ed areas) have no course code to track.
     }
+    for (const area of areaUnitsFor(section)) units.push({ ...base, ...area });
   });
   return units;
 }
 
-// Degree progress per section, based on the courses the student marked done.
+// What the profile setup page shows as "already completed" checkboxes:
+// every course (including "choose" options), core area and pathway slot.
+export function buildChecklist(requirements) {
+  const seen = new Set();
+  return requirements.sections
+    .map((section) => ({
+      title: section.title,
+      items: [
+        ...section.items
+          .flatMap((item) => (item.code ? [item] : (item.options ?? [])))
+          .map((c) => ({ id: c.code, code: c.code, title: c.title })),
+        ...areaUnitsFor(section).map((a) => ({ id: a.id, code: null, title: a.title })),
+      ].filter((i) => !seen.has(i.id) && seen.add(i.id)),
+    }))
+    .filter((s) => s.items.length);
+}
+
+// Degree progress per section, based on what the student marked done.
 export function buildTracker(requirements, completedCourses, pace, keywords) {
   const done = new Set(completedCourses);
   const concentration = pickConcentration(requirements, done, keywords);
@@ -130,6 +191,9 @@ export function buildTracker(requirements, completedCourses, pace, keywords) {
     if (unit.kind === "course") {
       required = unit.credits;
       completed = done.has(unit.code) ? unit.credits : 0;
+    } else if (unit.kind === "area") {
+      required = unit.credits;
+      completed = done.has(unit.id) ? unit.credits : 0;
     } else {
       const byCredits = [...unit.options].sort((a, b) => a.credits - b.credits);
       required = byCredits.slice(0, unit.count).reduce((s, o) => s + o.credits, 0);
@@ -149,7 +213,7 @@ export function buildTracker(requirements, completedCourses, pace, keywords) {
   }
 
   const graduationCredits = requirements.graduation_credits ?? 120;
-  // Only courses tracked here count; other credits live in DegreeWorks.
+  // Only what's tracked here counts; other credits live in DegreeWorks.
   const remaining = Math.max(graduationCredits - completedCredits, 0);
   const perSemester = PACE_CREDITS[pace] ?? PACE_CREDITS.medium;
 
@@ -161,7 +225,7 @@ export function buildTracker(requirements, completedCourses, pace, keywords) {
     graduationCredits,
     creditsPerSemester: perSemester,
     semestersLeft: Math.ceil(remaining / perSemester),
-    sections: [...sections.values()],
+    sections: [...sections.values()].filter((s) => s.required > 0),
   };
 }
 
@@ -175,14 +239,29 @@ function sectionPriority(title) {
   return 1;
 }
 
-// Next semester's suggested classes, filling the pace's credit budget.
-// Order: section priority, then course level. At most one course per subject
-// (CMPT, MATH, ...) per semester, so sequences like CMPT 220L -> 221L are
-// taken in order without needing prerequisite data. For "choose" groups,
-// options that match the student's interests come first.
-export function suggestClasses(requirements, completedCourses, pace, keywords) {
+// Without prerequisite data, a course waits if another unfinished course in
+// the same subject comes before it: a lower level band (CMPT 120L before any
+// 200-level CMPT), or a direct sequel in the same band (CMPT 220L -> 221L).
+function isBlocked(course, remaining) {
+  const subject = subjectOf(course.code);
+  return remaining.some(
+    (other) =>
+      other !== course &&
+      other.code &&
+      subjectOf(other.code) === subject &&
+      other.level < course.level &&
+      (Math.floor(other.level / 100) < Math.floor(course.level / 100) ||
+        course.level - other.level < 10),
+  );
+}
+
+// Next semester's suggested classes, landing in the pace's credit range.
+// Order: section priority, then section, then course level. Up to two
+// courses per subject, never a course whose predecessor is unfinished.
+// Core areas and one Pathway course fill the rest of the semester.
+export function suggestClasses(requirements, completedCourses, pace, keywords, options = {}) {
   const done = new Set(completedCourses);
-  const budget = PACE_CREDITS[pace] ?? PACE_CREDITS.medium;
+  const range = PACE_RANGE[pace] ?? PACE_RANGE.medium;
   const concentration = pickConcentration(requirements, done, keywords);
 
   const titleScore = (title) =>
@@ -190,45 +269,61 @@ export function suggestClasses(requirements, completedCourses, pace, keywords) {
 
   const candidates = [];
   for (const unit of requirementUnits(requirements, concentration)) {
+    const base = { section: unit.section, sectionIndex: unit.sectionIndex };
+
     if (unit.kind === "course") {
       if (!done.has(unit.code)) {
         candidates.push({
+          ...base,
           code: unit.code,
           title: unit.title,
           credits: unit.credits,
-          section: unit.section,
           level: courseLevel(unit.code),
-          sectionIndex: unit.sectionIndex,
         });
       }
-      continue;
+    } else if (unit.kind === "area") {
+      if (!done.has(unit.id)) {
+        candidates.push({
+          ...base,
+          id: unit.id,
+          code: null,
+          title: unit.pathway && options.pathwayName
+            ? `${options.pathwayName} pathway course`
+            : unit.title,
+          credits: unit.credits,
+          pathway: !!unit.pathway,
+          level: 999,
+        });
+      }
+    } else {
+      const taken = unit.options.filter((o) => done.has(o.code)).length;
+      if (taken >= unit.count) continue;
+
+      const open = unit.options
+        .filter((o) => !done.has(o.code))
+        .map((o) => ({ ...o, interestMatch: titleScore(o.title) > 0 }))
+        .sort((a, b) => b.interestMatch - a.interestMatch || courseLevel(a.code) - courseLevel(b.code));
+      const best = open[0];
+
+      candidates.push({
+        ...base,
+        code: best.code,
+        title: best.title,
+        credits: best.credits,
+        choice: unit.label,
+        alternatives: open.slice(1, 4).map(({ code, title }) => ({ code, title })),
+        reason: best.interestMatch ? "Matches your interests" : null,
+        level: courseLevel(best.code),
+      });
     }
-
-    const taken = unit.options.filter((o) => done.has(o.code)).length;
-    if (taken >= unit.count) continue;
-
-    const options = unit.options
-      .filter((o) => !done.has(o.code))
-      .map((o) => ({ ...o, interestMatch: titleScore(o.title) > 0 }))
-      .sort((a, b) => b.interestMatch - a.interestMatch || courseLevel(a.code) - courseLevel(b.code));
-    const best = options[0];
-
-    candidates.push({
-      code: best.code,
-      title: best.title,
-      credits: best.credits,
-      section: unit.section,
-      choice: unit.label,
-      alternatives: options.slice(1, 4).map(({ code, title }) => ({ code, title })),
-      reason: best.interestMatch ? "Matches your interests" : null,
-      level: courseLevel(best.code),
-      sectionIndex: unit.sectionIndex,
-    });
   }
 
   // A course can appear in more than one group (e.g. an elective list).
   const seen = new Set();
-  const unique = candidates.filter((c) => !seen.has(c.code) && seen.add(c.code));
+  const unique = candidates.filter((c) => {
+    const key = c.code ?? c.id;
+    return !seen.has(key) && seen.add(key);
+  });
   unique.sort(
     (a, b) =>
       sectionPriority(a.section) - sectionPriority(b.section) ||
@@ -237,22 +332,33 @@ export function suggestClasses(requirements, completedCourses, pace, keywords) {
   );
 
   const picked = [];
-  const subjects = new Set();
+  const perSubject = new Map();
+  let pathwayPicked = false;
   let credits = 0;
+
   for (const c of unique) {
-    const subject = c.code.split(" ")[0];
-    if (subjects.has(subject)) continue;
-    // Claim the subject even if this course doesn't fit, so a later course in
-    // the same sequence (e.g. CS Project II) can't jump ahead of it.
-    subjects.add(subject);
-    if (credits + c.credits > budget) continue;
+    if (credits >= range.min) break;
+    if (credits + c.credits > range.max) continue;
+
+    if (c.code) {
+      const subject = subjectOf(c.code);
+      if ((perSubject.get(subject) ?? 0) >= MAX_PER_SUBJECT) continue;
+      if (isBlocked(c, unique)) continue;
+      perSubject.set(subject, (perSubject.get(subject) ?? 0) + 1);
+    } else if (c.pathway) {
+      // One pathway course a semester spreads the pathway across years.
+      if (pathwayPicked) continue;
+      pathwayPicked = true;
+    }
+
     picked.push(c);
     credits += c.credits;
   }
 
   return {
     credits,
-    budget,
+    min: range.min,
+    max: range.max,
     classes: picked.map(({ level, sectionIndex, ...c }) => c),
   };
 }

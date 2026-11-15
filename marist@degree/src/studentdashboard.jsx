@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDashboard, declarePathway } from "./api";
+import { getDashboard, declarePathway, openFormPdf } from "./api";
 import ProfileSetup from "./profilesetup";
 
 function Card({ title, children, className = "" }) {
@@ -26,12 +26,68 @@ function ProgressBar({ value, max }) {
   );
 }
 
+const FORM_STATUS = {
+  pending_advisor: "Waiting for your advisor's signature",
+  sent_to_registrar: "Signed and sent to the Registrar",
+};
+
+// Status of the auto-filled Pathway Declaration Request Form.
+function PathwayFormStatus({ form }) {
+  const [error, setError] = useState("");
+  if (!form) return null;
+  const sent = form.status === "sent_to_registrar";
+
+  async function view() {
+    setError("");
+    try {
+      await openFormPdf(form.id);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    <div className="border rounded-sm p-3 flex flex-col gap-1 text-sm">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-bold">Pathway Declaration form</p>
+        <button
+          onClick={view}
+          className="text-red-700 font-bold hover:underline cursor-pointer"
+        >
+          View PDF
+        </button>
+      </div>
+      <p>
+        <span
+          className={`text-xs font-bold rounded-sm px-1 py-0.5 ${
+            sent ? "bg-red-700 text-white" : "border border-red-700 text-red-700"
+          }`}
+        >
+          {sent ? "Sent" : "Pending"}
+        </span>{" "}
+        {FORM_STATUS[form.status]}
+        {sent && form.sent_at && <> on {new Date(form.sent_at).toLocaleDateString()}</>}
+      </p>
+      <p className="text-xs">
+        {form.data.declaration === "change" ? "Change of Declaration" : "Initial Declaration"} ·
+        filled in {form.data.date}
+      </p>
+      {error && <p className="text-red-700 text-xs">{error}</p>}
+    </div>
+  );
+}
+
 function SuggestedPathway({ data, onDeclared }) {
   const [saving, setSaving] = useState(null);
   const [error, setError] = useState("");
   const declared = data.declaredPathway;
 
   async function declare(id) {
+    const name = data.suggestedPathways.find((p) => p.id === id)?.name;
+    const ok = window.confirm(
+      `Declare ${name}?\n\nWe'll fill in your Pathway Declaration Request Form and send it to your advisor to sign. Once signed, it goes to the Registrar.`,
+    );
+    if (!ok) return;
     setSaving(id);
     setError("");
     try {
@@ -51,6 +107,7 @@ function SuggestedPathway({ data, onDeclared }) {
           Declared: <span className="font-bold text-red-700">{declared.name}</span>
         </p>
       )}
+      <PathwayFormStatus form={data.pathwayForm} />
       <ul className="flex flex-col gap-2">
         {data.suggestedPathways.map((p, i) => (
           <li key={p.id} className="border rounded-sm p-3 flex flex-col gap-1">
@@ -98,18 +155,25 @@ function SuggestedClasses({ suggestion }) {
   return (
     <Card title="Suggested classes for next semester">
       <p className="text-sm">
-        <span className="font-bold">{suggestion.credits}</span> of{" "}
-        {suggestion.budget} credits at your pace
+        <span className="font-bold">{suggestion.credits} credits</span> · your
+        pace aims for {suggestion.min}–{suggestion.max}
       </p>
       {suggestion.classes.length === 0 ? (
         <p className="text-sm">You've completed every tracked course. 🎓</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {suggestion.classes.map((c) => (
-            <li key={c.code} className="border rounded-sm p-3">
+            <li key={c.code ?? c.id} className="border rounded-sm p-3">
               <div className="flex justify-between gap-2">
                 <p>
-                  <span className="font-bold text-red-700">{c.code}</span> {c.title}
+                  {c.code ? (
+                    <span className="font-bold text-red-700">{c.code}</span>
+                  ) : (
+                    <span className="text-xs font-bold border border-red-700 text-red-700 rounded-sm px-1 py-0.5">
+                      {c.pathway ? "Pathway" : "Core"}
+                    </span>
+                  )}{" "}
+                  {c.title}
                 </p>
                 <span className="text-sm whitespace-nowrap">{c.credits} cr</span>
               </div>
@@ -265,7 +329,7 @@ export default function StudentDashboard({ profile, onLogout }) {
 
   return (
     <div className="min-h-screen px-4 py-8">
-      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+      <div className="w-full max-w-7xl mx-auto flex flex-col gap-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl text-red-700 font-bold">Marist SmartDegree</h1>

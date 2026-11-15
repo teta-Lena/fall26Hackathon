@@ -12,7 +12,9 @@ import {
   rankPathways,
   suggestClasses,
   buildTracker,
+  buildChecklist,
 } from "./recommend.js";
+import { registerFormRoutes, latestPathwayForm } from "./formroutes.js";
 
 const app = e();
 
@@ -143,7 +145,16 @@ async function loadStudent(supabase, userId) {
 // Everything the profile setup page needs to pre-fill itself.
 app.get("/student/plan", requireUser, async (req, res) => {
   try {
-    res.json(await loadStudent(req.supabase, req.user.id));
+    const { profile, plan, major } = await loadStudent(req.supabase, req.user.id);
+    res.json({
+      profile,
+      plan,
+      major: major && {
+        slug: major.slug,
+        name: major.name,
+        checklist: buildChecklist(major.requirements),
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -221,20 +232,25 @@ app.get("/student/dashboard", requireUser, async (req, res) => {
 
     const keywords = studentKeywords(plan, profile.major_slug);
     const ranked = rankPathways(pathways, keywords);
+    const declaredPathway =
+      pathways.find((p) => p.id === profile.pathway_id) ?? null;
 
     res.json({
       profile,
       plan,
       major: major && { slug: major.slug, name: major.name },
-      declaredPathway:
-        pathways.find((p) => p.id === profile.pathway_id) ?? null,
+      declaredPathway,
+      pathwayForm: await latestPathwayForm(req.supabase, req.user.id),
       suggestedPathways: ranked.slice(0, 3),
+      // Pathway course slots are named after the declared pathway, or the
+      // best match until the student declares one.
       suggestedClasses: major
         ? suggestClasses(
             major.requirements,
             plan.completed_courses,
             plan.pace,
             keywords,
+            { pathwayName: (declaredPathway ?? ranked[0])?.name },
           )
         : null,
       tracker: major
@@ -252,21 +268,9 @@ app.get("/student/dashboard", requireUser, async (req, res) => {
   }
 });
 
-// Declare a pathway. Students can change only pathway_id on their profile.
-app.post("/student/pathway", requireUser, async (req, res) => {
-  const pathwayId = Number(req.body?.pathway_id);
-  if (!Number.isInteger(pathwayId)) {
-    return res.status(400).json({ error: "pathway_id is required" });
-  }
-  const { data, error } = await req.supabase
-    .from("profiles")
-    .update({ pathway_id: pathwayId })
-    .eq("id", req.user.id)
-    .select("id, pathway_id")
-    .single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
+// Declaring a pathway, the Pathway Declaration form, and the advisor's
+// sign-and-send to the registrar live in formroutes.js.
+registerFormRoutes(app);
 
 // ---------- Advisor: notices ----------
 

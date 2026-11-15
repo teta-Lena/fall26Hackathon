@@ -77,3 +77,24 @@ export const sendNotice = (notice) =>
     method: "POST",
     body: JSON.stringify(notice),
   });
+export const getAdvisorForms = () => apiFetch("/advisor/forms");
+export const signForm = (id) =>
+  apiFetch(`/advisor/forms/${id}/sign`, { method: "POST" });
+
+// Opens a filled-in form PDF in a new tab. The tab is opened right away
+// (inside the click) so pop-up blockers allow it, then pointed at the PDF.
+export async function openFormPdf(id) {
+  const tab = window.open("", "_blank");
+  const session = getSession();
+  const res = await fetch(`${API}/forms/${id}/pdf`, {
+    headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+  });
+  if (!res.ok) {
+    tab?.close();
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Couldn't open the form (${res.status})`);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  if (tab) tab.location.href = url;
+  else window.location.href = url;
+}

@@ -4,23 +4,10 @@ import { getPlan, savePlan } from "./api";
 const GOALS = ["Job", "Grad School", "Research", "Entrepreneur", "Not sure yet"];
 
 const PACES = [
-  { value: "easy", label: "Relaxed", detail: "12 credits a semester" },
-  { value: "medium", label: "Standard", detail: "15 credits a semester" },
-  { value: "hard", label: "Accelerated", detail: "18 credits a semester" },
+  { value: "easy", label: "Relaxed", detail: "12–14 credits a semester" },
+  { value: "medium", label: "Standard", detail: "14–16 credits a semester" },
+  { value: "hard", label: "Accelerated", detail: "17–18 credits a semester" },
 ];
-
-// Course codes in each requirement section, including "choose one" options.
-function courseChecklist(requirements) {
-  const seen = new Set();
-  return requirements.sections
-    .map((section) => ({
-      title: section.title,
-      courses: section.items
-        .flatMap((item) => (item.code ? [item] : (item.options ?? [])))
-        .filter((c) => !seen.has(c.code) && seen.add(c.code)),
-    }))
-    .filter((s) => s.courses.length);
-}
 
 // Shown right after a student's first login, and from "Edit plan".
 // onDone runs after saving; onCancel is only passed when editing.
@@ -92,7 +79,7 @@ export default function ProfileSetup({ onDone, onCancel }) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full max-w-xl">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 w-full max-w-3xl">
         <div className="flex flex-col gap-1">
           <label htmlFor="interests" className="font-bold">
             Interests
@@ -162,25 +149,25 @@ export default function ProfileSetup({ onDone, onCancel }) {
               Courses you've already completed in{" "}
               <span className="text-red-700">{major.name}</span>
             </legend>
-            {courseChecklist(major.requirements).map((section) => (
+            {major.checklist.map((section) => (
               <details key={section.title} className="border rounded-sm p-2">
                 <summary className="cursor-pointer font-bold">
                   {section.title}{" "}
                   <span className="text-sm font-normal">
-                    ({section.courses.filter((c) => completed.includes(c.code)).length}/
-                    {section.courses.length})
+                    ({section.items.filter((c) => completed.includes(c.id)).length}/
+                    {section.items.length})
                   </span>
                 </summary>
                 <div className="flex flex-col gap-1 mt-2">
-                  {section.courses.map((c) => (
-                    <label key={c.code} className="flex items-center gap-2 text-sm">
+                  {section.items.map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
-                        checked={completed.includes(c.code)}
-                        onChange={() => toggle(completed, setCompleted, c.code)}
+                        checked={completed.includes(c.id)}
+                        onChange={() => toggle(completed, setCompleted, c.id)}
                         className="accent-red-700"
                       />
-                      <span className="font-bold">{c.code}</span> {c.title}
+                      {c.code && <span className="font-bold">{c.code}</span>} {c.title}
                     </label>
                   ))}
                 </div>

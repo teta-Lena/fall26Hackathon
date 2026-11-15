@@ -1,5 +1,5 @@
 // Seeds majors and demo accounts (there is no signup page).
-// Run after db.sql, pathways.sql, majors.sql and dashboard.sql: `npm run seed`.
+// Run after db.sql, pathways.sql, majors.sql, dashboard.sql and forms.sql: `npm run seed`.
 // Safe to run again.
 //
 // Uses the secret key (bypasses RLS). It's the only way to set a user's
@@ -13,7 +13,7 @@ const admin = supabaseAdmin();
 // Explains the most common failure: a table or column from the SQL files is missing.
 function fail(step, error) {
   const hint = /schema cache|does not exist|column/i.test(error.message)
-    ? "\n  → Run db.sql, pathways.sql, majors.sql, then dashboard.sql in the Supabase SQL editor first."
+    ? "\n  → Run db.sql, pathways.sql, majors.sql, dashboard.sql, then forms.sql in the Supabase SQL editor first."
     : "";
   console.error(`✗ ${step}: ${error.message}${hint}`);
   process.exit(1);
@@ -29,9 +29,9 @@ console.log(`✓ majors: ${majors.map((m) => m.name).join(", ")}`);
 
 // 2. Users. Emails and passwords come from .env so they stay out of git.
 const users = [
-  { env: "ADVISOR", full_name: "Alex Advisor", role: "advisor", major_slug: null },
-  { env: "CS_STUDENT", full_name: "Casey Coder", role: "student", major_slug: "computer-science" },
-  { env: "FINANCE_STUDENT", full_name: "Finley Banks", role: "student", major_slug: "finance" },
+  { env: "ADVISOR", full_name: "Alex Advisor", role: "advisor", major_slug: null, cwid: "20000001" },
+  { env: "CS_STUDENT", full_name: "Casey Coder", role: "student", major_slug: "computer-science", cwid: "20012345" },
+  { env: "FINANCE_STUDENT", full_name: "Finley Banks", role: "student", major_slug: "finance", cwid: "20012346" },
 ];
 
 const missing = users
@@ -80,6 +80,7 @@ for (const user of users) {
     full_name: user.full_name,
     role: user.role,
     major_slug: user.major_slug,
+    cwid: user.cwid,
   });
   if (profileError) fail(`profile for ${email}`, profileError);
 
@@ -88,6 +89,15 @@ for (const user of users) {
     `✓ ${user.role}: ${email}${user.major_slug ? ` (${user.major_slug})` : ""}`,
   );
 }
+
+// The demo advisor is every demo student's primary advisor (signs their forms).
+const advisorId = users.find((u) => u.role === "advisor").id;
+const { error: advisorError } = await admin
+  .from("profiles")
+  .update({ advisor_id: advisorId })
+  .in("id", users.filter((u) => u.role === "student").map((u) => u.id));
+if (advisorError) fail("assign advisor", advisorError);
+console.log("✓ students assigned to Alex Advisor");
 
 // 3. Demo notices (needs dashboard.sql). Seeded notices are replaced each run;
 // notices advisors send from the app are kept.
